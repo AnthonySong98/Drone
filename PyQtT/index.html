@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <!-- 原始地址：//webapi.amap.com/ui/1.0/ui/misc/PathSimplifier/examples/simple-demo.html -->
+ 
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>飞行轨迹</title>
+    <style>
+    html,
+    body,
+    #container {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+    }
+    </style>
+</head>
+
+<body>
+    <div id="container"></div>
+    <script type="text/javascript" src='http://webapi.amap.com/maps?v=1.4.5&key=您申请的key值'></script>
+    <!-- UI组件库 1.0 -->
+    <script src="http://webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+    <script type="text/javascript">
+	//需要从数据库传入的经纬度值
+    var myPath = [
+                [116.405289, 39.904987],
+			    [116.406289, 39.904987],
+				[116.407289, 39.904987],
+				[116.40889, 39.904987],
+				[116.409289, 39.904987],
+				[116.410289, 39.904987],
+				[116.411289, 39.904987]
+
+            ];
+    //创建地图,以第一个经纬度为中心。
+    var map = new AMap.Map('container', {
+        zoom: 17,
+		center:myPath[0]
+    });
+
+    document.addEventListener("DOMContentLoaded",function () {
+        new QWebChannel(qt.webChannelTransport,function (channel) {
+            window.bridge=channel.objects.bridge
+        })
+    });
+
+    function recvmsg() {
+        if (window.bridge){
+            myPath.push()
+        }
+    }
+
+    AMapUI.load(['ui/misc/PathSimplifier', 'lib/$'], function(PathSimplifier, $) {
+
+        if (!PathSimplifier.supportCanvas) {
+            alert('当前环境不支持 Canvas！');
+            return;
+        }
+
+        var pathSimplifierIns = new PathSimplifier({
+            zIndex: 100,
+            //autoSetFitView:false,
+            map: map, //所属的地图实例
+
+            getPath: function(pathData, pathIndex) {
+
+                return pathData.path;
+            },
+            getHoverTitle: function(pathData, pathIndex, pointIndex) {
+
+                if (pointIndex >= 0) {
+                    //point 
+                    return pathData.name + '，点：' + pointIndex + '/' + pathData.path.length;
+                }
+
+                return pathData.name + '，点数量' + pathData.path.length;
+            },
+            renderOptions: {
+
+                renderAllPointsIfNumberBelow: 100 //绘制路线节点，如不需要可设置为-1
+            }
+        });
+
+        window.pathSimplifierIns = pathSimplifierIns;
+		data = [{
+		    name: 'flyroute',
+			path: myPath
+			
+			}];
+
+        //设置数据
+        pathSimplifierIns.setData(data);
+		function onload() {
+            pathSimplifierIns.renderLater();
+			
+        }
+
+        function onerror(e) {
+            alert('图片加载失败！');
+        }
+
+        //对第一条线路（即索引 0）创建一个巡航器
+        var navg1 = pathSimplifierIns.createPathNavigator(0, {
+            loop: false, //循环播放
+            speed: 100, //巡航速度，单位千米/小时
+			pathNavigatorStyle: {
+                    width: 24,
+                    height: 24,
+                    //使用小飞机图片
+                    content: PathSimplifier.Render.Canvas.getImageContent('http://webapi.amap.com/ui/1.0/ui/misc/PathSimplifier/examples/imgs/plane.png', onload, onerror),
+                    strokeStyle: null,
+                    fillStyle: null
+
+            }
+        });
+
+        navg1.start();
+    });
+    </script>
+</body>
+
+</html>
